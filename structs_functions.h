@@ -15,6 +15,7 @@ struct struct_t_RX_Status      StrRXStatus;
 // Variable
 uint32_t cur_time = 0;
 uint32_t prev_time = 0;
+uint32_t prev_time_20hz = 0;
 int count_loop = 0;
 
 int flag_ROS_TX_Status = -1;
@@ -30,6 +31,14 @@ int time_MAG = 0;
 
 int cur_FlagA = -1;
 int prev_FlagA = -1;
+
+// Lidar Control
+float LidarA_Alt_mm = 0.0;
+float LidarB_Alt_mm = 0.0;
+float LidarMax_Alt_mm = 0.0;
+float Prev_LidarMax_Alt_mm = 0.0;
+float LidarMax_Smooth_Alt_mm = 0.0;
+float A_Lidar_LPF = 0.1;
 
 // --------------------
 // Function Declaration
@@ -113,8 +122,9 @@ void ROS_TX(int TX_MODE) {
       {
           StrRXStatus.Header[0] = 0x43;
           StrRXStatus.Header[1] = 0x21;
-          StrRXStatus.status_MAG = status_MAG;
-          StrRXStatus.status_TSW = status_TSW;
+          StrRXStatus.Status_MAG = status_MAG;
+          StrRXStatus.Status_TSW = status_TSW;
+          StrRXStatus.LidarAlt_mm = LidarMax_Smooth_Alt_mm;
           Serial.write(&StrRXStatus, sizeof(struct_t_RX_Status));
           flag_ROS_TX_Status = 0;
 //          Toggle_LED(0);
@@ -125,10 +135,11 @@ void ROS_TX(int TX_MODE) {
           Serial.print("\t[Packet_Size]\t"); Serial.println(sizeof(struct_t_RX_Status));
           
           Serial.print("[Header(0)]\t0x"); Serial.print(StrRXStatus.Header[0], HEX);
-          Serial.print("\t[Header(1)]\t0x"); Serial.print(StrRXStatus.Header[1], HEX);
+          Serial.print("\t[Header(1)]\t0x"); Serial.println(StrRXStatus.Header[1], HEX);
           
-          Serial.print("[status_MAG]\t\t0x"); Serial.print(StrRXStatus.status_MAG, HEX);
-          Serial.print("[status_TSW]\t\t0x"); Serial.println(StrRXStatus.status_TSW, HEX);
+          Serial.print("[status_MAG]\t\t0x"); Serial.print(StrRXStatus.Status_MAG, HEX);
+          Serial.print("\t[status_TSW]\t\t0x"); Serial.print(StrRXStatus.Status_TSW, HEX);
+          Serial.print("\t[LidarAlt_mm]\t\t"); Serial.println(StrRXStatus.LidarAlt_mm, DEC);
           Serial.println(" ");
 #endif
 //        }

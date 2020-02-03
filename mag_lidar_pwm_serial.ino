@@ -16,31 +16,74 @@ Servo MAG_RIGHT;
 
 
 void setup() {
-  Serial.begin(921600); // USB, ROS Interface
+  // Setup Serial Communication
+  Serial.begin(921600); // UART to USB, ROS Interface
 #ifdef DEBUG_MODE
   Serial.println("Setup Start");
   Serial.println("");
 #endif
+
+  // Setup pins' input/output
   pinMode(PC13, OUTPUT); // heartbeat
-  pinMode(PA0, INPUT); // TSW_1
-  pinMode(PA1, INPUT); // TSW_2
-  pinMode(PA2, INPUT); // TSW_3
-  pinMode(PA3, INPUT); // TSW_4
-  pinMode(PA4, OUTPUT); // LED_MAG_LEFT
-  pinMode(PA5, OUTPUT); // LED_MAG_RIGHT
-  pinMode(PA6, OUTPUT); // LED_TSW_1
-  pinMode(PA7, OUTPUT); // LED_TSW_2
-  pinMode(PB0, OUTPUT); // LED_TSW_3
-  pinMode(PB1, OUTPUT); // LED_TSW_4
-  MAG_LEFT.attach(PB8); // MAG_LEFT
+  pinMode(PA0, INPUT);   // TSW_1
+  pinMode(PA1, INPUT);   // TSW_2
+  pinMode(PA2, INPUT);   // TSW_3
+  pinMode(PA3, INPUT);   // TSW_4
+  pinMode(PA4, OUTPUT);  // LED_MAG_LEFT
+  pinMode(PA5, OUTPUT);  // LED_MAG_RIGHT
+  pinMode(PA6, OUTPUT);  // LED_TSW_1
+  pinMode(PA7, OUTPUT);  // LED_TSW_2
+  pinMode(PB0, OUTPUT);  // LED_TSW_3
+  pinMode(PB1, OUTPUT);  // LED_TSW_4
+  MAG_LEFT.attach(PB8);  // MAG_LEFT
   MAG_RIGHT.attach(PB9); // MAG_RIGHT
+  pinMode(PA8, INPUT);   // Lidar A (Timer 1 channel 1)
+  pinMode(PB6, INPUT);   // Lidar B (Timer 4 channel 1)
   delay(2);
+
+  // Setup the timer 1 for Lidar A
+  Timer1.pause(); // stop the timers before configuring them
+  Timer1.setPrescaleFactor(72); // 1 microsecond resolution
+  Timer1.setInputCaptureMode(TIMER_CH1, TIMER_IC_INPUT_DEFAULT); // setup timer 1 channel 1 capture on rising edge, use default input TI1
+  Timer1.setInputCaptureMode(TIMER_CH2, TIMER_IC_INPUT_SWITCH); // setup timer 1 channel 2 capture on falling edge, use switched input TI1
+  Timer1.setPolarity(TIMER_CH2, 1); // trigger on falling edge
+  Timer1.setSlaveFlags( TIMER_SMCR_TS_TI1FP1 | TIMER_SMCR_SMS_RESET ); // counter setup as slave triggered by TI1 in reset mode
+
+  Timer1.refresh();
+  Timer1.getCompare(TIMER_CH1); // clear capture flag
+  Timer1.getCompare(TIMER_CH2); // clear capture flag
+  Timer1.resume(); // let timer 1 run
+
+  while ( !Timer1.getInputCaptureFlag(TIMER_CH1) ); // discard first reading, wait for first period end
+  Timer1.getCompare(TIMER_CH1); // clear capture flag
+
+  // Setup the timer 4 for Lidar B
+  Timer4.pause(); // stop the timers before configuring them
+  Timer4.setPrescaleFactor(72); // 1 microsecond resolution
+  Timer4.setInputCaptureMode(TIMER_CH1, TIMER_IC_INPUT_DEFAULT); // setup timer 4 channel 1 capture on rising edge, use default input TI1
+  Timer4.setInputCaptureMode(TIMER_CH2, TIMER_IC_INPUT_SWITCH); // setup timer 4 channel 2 capture on falling edge, use switched input TI1
+  Timer4.setPolarity(TIMER_CH2, 1); // trigger on falling edge
+  Timer4.setSlaveFlags( TIMER_SMCR_TS_TI1FP1 | TIMER_SMCR_SMS_RESET ); // counter setup as slave triggered by TI1 in reset mode
+
+  Timer4.refresh();
+  Timer4.getCompare(TIMER_CH1); // clear capture flag
+  Timer4.getCompare(TIMER_CH2); // clear capture flag
+  Timer4.resume(); // let timer 4 run
+
+  while ( !Timer4.getInputCaptureFlag(TIMER_CH1) ); // discard first reading, wait for first period end
+  Timer4.getCompare(TIMER_CH1); // clear capture flag
+  delay(2);
+
+  // Setup the time
+  cur_time = millis();
+  prev_time = cur_time;
+  prev_time_20hz = cur_time;
+
+  // Indicates the setup is completed
   for(int i = 0; i < 10; i++) { // Let us know the setup is completed
     Toggle_OnOff_LED(13, 0);
     delay(200);
   }
-  cur_time = millis();
-  prev_time = cur_time;
 }
 
 
@@ -52,7 +95,11 @@ void loop() {
   {
     Toggle_OnOff_LED(13, 0);
     prev_time = cur_time;
+  }
+  if (cur_time - prev_time_20hz > 50)
+  {
     flag_ROS_TX_Status = 1;
+    prev_time_20hz = cur_time;
   }
 
   //
@@ -129,5 +176,14 @@ void loop() {
   Toggle_OnOff_LED(5, status_MAG_RIGHT);
 
   status_MAG = status_MAG_LEFT && status_MAG_RIGHT;
-  
+
+  // Lidar Control
+  if (Timer1.getInputCaptureFlag(TIMER_CH2)) // high pulse end
+    LidarA_Alt_mm = Timer1.getCompare(TIMER_CH2);
+  if (Timer4.getInputCaptureFlag(TIMER_CH2)) // high pulse end
+    LidarB_Alt_mm = Timer4.getCompare(TIMER_CH2);
+    
+  LidarMax_Alt_mm = max(LidarA_Alt_mm, LidarB_Alt_mm);
+  LidarMax_Smooth_Alt_mm = A_Lidar_LPF * LidarMax_Alt_mm + (1.0 - A_Lidar_LPF) * Prev_LidarMax_Alt_mm;
+  Prev_LidarMax_Alt_mm = LidarMax_Alt_mm;
 }

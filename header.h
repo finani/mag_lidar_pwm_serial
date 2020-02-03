@@ -31,11 +31,12 @@ struct struct_t_RX_Status
 {
      uint8_t     Header[2];          // 0x43, 0x21 (STM32Duino to ROS)
 
-     uint8_t     status_MAG;         /* Magnet;
+     uint8_t     Status_MAG;         /* Magnet;
                                         [0] Magnet Off
                                         [1] Magnet On */
-     uint8_t     status_TSW;         /* Tactile Sensor;
+     uint8_t     Status_TSW;         /* Tactile Sensor;
                                         [0] Touched
                                         [1] Untouched */
+     uint16_t    LidarAlt_mm;
 };
 #pragma pack()
