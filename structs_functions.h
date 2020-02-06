@@ -38,7 +38,7 @@ float LidarB_Alt_mm = 0.0;
 float LidarMax_Alt_mm = 0.0;
 float Prev_LidarMax_Alt_mm = 0.0;
 float LidarMax_Smooth_Alt_mm = 0.0;
-float A_Lidar_LPF = 0.1;
+float A_Lidar_LPF = 0.02;
 
 // --------------------
 // Function Declaration
@@ -124,7 +124,7 @@ void ROS_TX(int TX_MODE) {
           StrRXStatus.Header[1] = 0x21;
           StrRXStatus.Status_MAG = status_MAG;
           StrRXStatus.Status_TSW = status_TSW;
-          StrRXStatus.LidarAlt_mm = LidarMax_Smooth_Alt_mm;
+          StrRXStatus.LidarAlt_mm = (uint16_t)LidarMax_Smooth_Alt_mm;
           Serial.write(&StrRXStatus, sizeof(struct_t_RX_Status));
           flag_ROS_TX_Status = 0;
 //          Toggle_LED(0);
@@ -132,7 +132,7 @@ void ROS_TX(int TX_MODE) {
 #ifdef DEBUG_MODE_ROS_TX
           Serial.println("\t[ROS (MAG Status) TX Data]");
     
-          Serial.print("\t[Packet_Size]\t"); Serial.println(sizeof(struct_t_RX_Status));
+          Serial.print("[Packet_Size]\t"); Serial.println(sizeof(struct_t_RX_Status));
           
           Serial.print("[Header(0)]\t0x"); Serial.print(StrRXStatus.Header[0], HEX);
           Serial.print("\t[Header(1)]\t0x"); Serial.println(StrRXStatus.Header[1], HEX);
