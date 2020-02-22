@@ -118,8 +118,24 @@ void loop() {
   Toggle_OnOff_LED(0, status_TSW_3);
   Toggle_OnOff_LED(1, status_TSW_4);
   
-  status_TSW = status_TSW_1 && status_TSW_2 && status_TSW_3 && status_TSW_4;
-  
+  status_TSW_temp = status_TSW_1 || status_TSW_2 || status_TSW_3 || status_TSW_4;
+
+  if(status_TSW_temp != status_TSW_temp_prev) {
+    time_TSW = millis();
+    status_TSW_temp_prev = status_TSW_temp;
+  }
+  if (status_TSW_temp == 1) {
+    cur_FlagA = 1;
+  }
+  else if(status_TSW_temp == 0) {
+    status_TSW = 0;
+  }
+  if ((status_TSW_temp == 1) && (cur_time - time_TSW > 3000)) {
+    status_TSW = 1;
+  }
+  if ((status_TSW == 0) && (cur_time - time_TSW > 3000)) {
+    cur_FlagA = 0;
+  }
   
   
   //

@@ -20,6 +20,8 @@ int count_loop = 0;
 
 int flag_ROS_TX_Status = -1;
 int status_TSW = -1;
+int status_TSW_temp = -1;
+int status_TSW_temp_prev = -1;
 int status_TSW_1 = -1;
 int status_TSW_2 = -1;
 int status_TSW_3 = -1;
@@ -28,6 +30,7 @@ int status_MAG = -1;
 int status_MAG_LEFT = -1; // [-1] Neutral, [0] OFF, [1] ON
 int status_MAG_RIGHT = -1; // [-1] Neutral, [0] OFF, [1] ON
 int time_MAG = 0;
+int time_TSW = 0;
 
 int cur_FlagA = -1;
 int prev_FlagA = -1;
