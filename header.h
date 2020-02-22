@@ -1,7 +1,7 @@
 
-#define DEBUG_MODE
-#define DEBUG_MODE_ROS_RX
-#define DEBUG_MODE_ROS_TX
+//#define DEBUG_MODE
+//#define DEBUG_MODE_ROS_RX
+//#define DEBUG_MODE_ROS_TX
 
 // --------------------
 // Variable Declaration
